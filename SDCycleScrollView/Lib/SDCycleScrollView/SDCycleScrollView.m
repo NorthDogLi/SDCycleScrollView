@@ -42,7 +42,6 @@ NSString * const ID = @"SDCycleScrollViewCell";
 
 @interface SDCycleScrollView () <UICollectionViewDataSource, UICollectionViewDelegate>
 
-
 @property (nonatomic, weak) UICollectionView *mainView; // 显示图片的collectionView
 @property (nonatomic, weak) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, strong) NSArray *imagePathsGroup;
@@ -51,6 +50,7 @@ NSString * const ID = @"SDCycleScrollViewCell";
 @property (nonatomic, weak) UIControl *pageControl;
 
 @property (nonatomic, strong) UIImageView *backgroundImageView; // 当imageURLs为空时的背景图
+@property (nonatomic, assign) int lastIndex;
 
 @end
 
@@ -457,12 +457,21 @@ NSString * const ID = @"SDCycleScrollViewCell";
     
     int index = 0;
     if (_flowLayout.scrollDirection == UICollectionViewScrollDirectionHorizontal) {
-        index = (_mainView.contentOffset.x + _flowLayout.itemSize.width * 0.5) / _flowLayout.itemSize.width;
+        //index = (_mainView.contentOffset.x + _flowLayout.itemSize.width * 0.5) / _flowLayout.itemSize.width;
+        // 解决RTL情况下获取下标错误的问题
+        if (UIView.isDirectionLTR) {
+            index = (_mainView.contentOffset.x + _flowLayout.itemSize.width * 0.5) / _flowLayout.itemSize.width;
+        } else {
+            index = (_mainView.contentSize.width - _mainView.contentOffset.x - _flowLayout.itemSize.width * 0.5) / _flowLayout.itemSize.width;
+        }
     } else {
         index = (_mainView.contentOffset.y + _flowLayout.itemSize.height * 0.5) / _flowLayout.itemSize.height;
     }
-    
-    return MAX(0, index);
+   
+//    NSArray<NSIndexPath *> *visibleIndexPaths = [_mainView indexPathsForVisibleItems];
+//    int index = (int)visibleIndexPaths.firstObject.row;
+    int curIndex = MAX(0, index);
+    return curIndex;
 }
 
 - (int)pageControlIndexWithCurrentCellIndex:(NSInteger)index
@@ -518,6 +527,7 @@ NSString * const ID = @"SDCycleScrollViewCell";
             }
         }
     }
+    
     CGFloat x = (self.sd_width - size.width) * 0.5;
     if (self.pageControlAliment == SDCycleScrollViewPageContolAlimentRight) {
         x = self.mainView.sd_width - size.width - 10;
